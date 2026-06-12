@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+
+# Go
+*.test
+*.out
+/load-simulator/load-simulator
+/quotes-go/quotes
+
+# Kotlin / Gradle
+.gradle/
+build/
+out/
+*.class
+local.properties
+
+# Android
+android-app/.idea/
+android-app/captures/
+android-app/app/release/
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Node / React Native
+node_modules/
+rn-app/.expo/
+
+# Kernel module build artifacts
+stock_gen_driver/*.ko
+stock_gen_driver/*.o
+stock_gen_driver/*.mod*
+stock_gen_driver/*.symvers
+stock_gen_driver/*.order
+stock_gen_driver/.tmp_versions/
+
+# Report build artifacts
+report/*.aux
+report/*.log
+report/*.toc
+report/*.bbl
+report/*.blg
+
+# Env / secrets
+.env
+*.local
