@@ -1,64 +1,92 @@
-# Stock Quote Go Service
+# Quotes Go Service (#6)
 
 HTTP microservice that reads synthetic stock quotes from the Linux character
-driver in `stock_gen_driver` and exposes them as JSON and Server-Sent Events.
+driver in `stock_gen_driver` (or generates them with a built-in GBM simulator),
+exposes them as JSON/SSE, publishes every tick to **Redis Pub/Sub**, and batches
+ticks into **ClickHouse** for history/candles.
 
-The driver emits 32-byte little-endian records from `/dev/stockN`; this service
-parses those records, keeps the last tick plus a bounded in-memory history, and
-is ready to be consumed by future Kotlin/Ktor, Android, React Native, and load
-testing services.
+The driver emits 32-byte little-endian records from `/dev/stockN`; each device
+index is mapped to a ticker symbol (`0:SBER,1:GAZP,2:AAPL,3:BTC` by default).
+
+## Data flow
+
+```
+/dev/stock0..3 (or simulator)
+        │
+        ▼
+   Pipeline ──► in-memory store ──► REST + SSE (/v1/*)
+        ├─────► Redis  PUBLISH quotes:ticks + SET quote:last:<symbol>
+        └─────► ClickHouse INSERT INTO ticks (batch: 1s / 5000 rows)
+```
+
+Redis message / `quote:last:<symbol>` value (consumed by Gateway #3 and Data #4):
+
+```json
+{ "symbol": "SBER", "price": 305.5, "ts": 1781297920237, "volume": 158, "seq": 25 }
+```
 
 ## Run
 
-Build and load the driver on Linux first:
+On Linux with the kernel module:
 
 ```bash
-cd stock_gen_driver
-make
-sudo insmod stock_gen.ko
+cd ../stock_gen_driver && make && sudo insmod stock_gen.ko
+go run . -addr :8081
 ```
 
-Start the Go service:
+Without the driver (macOS / plain container) use the simulator:
 
 ```bash
-go run . -addr :8080
+go run . -simulate -addr :8081
 ```
 
-Useful flags:
+All flags have env counterparts (env is read as the flag default):
 
-```bash
-go run . -addr :8080 -devices /dev/stock0,/dev/stock1 -history 1000
-```
+| Flag          | Env                      | Default                       |
+|---------------|--------------------------|-------------------------------|
+| `-addr`       | `QUOTES_ADDR`            | `:8081`                       |
+| `-devices`    | `QUOTES_DEVICES`         | discovered `/dev/stock*`      |
+| `-symbols`    | `QUOTES_SYMBOLS`         | `0:SBER,1:GAZP,2:AAPL,3:BTC`  |
+| `-redis`      | `QUOTES_REDIS_ADDR`      | empty → publishing disabled   |
+| `-clickhouse` | `QUOTES_CLICKHOUSE_ADDR` | empty → writing disabled      |
+| `-simulate`   | `QUOTES_SIMULATE=1`      | off                           |
+| `-healthcheck`| —                        | probe `/health` and exit      |
 
-If `/dev/stock*` is not available, the service still starts and reports
-`degraded` health. This makes local development possible without the kernel
-module.
+ClickHouse address format: `http://user:pass@host:8123/database` (HTTP
+interface, `INSERT ... FORMAT JSONEachRow`).
+
+Tracing is enabled when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (OTLP/HTTP,
+service name `quotes`): spans for Redis publishes and ClickHouse flushes.
 
 ## API
 
 ```http
-GET /health
+GET /health                              # 200 ok / 503 degraded
+GET /metrics                             # Prometheus text format
 GET /v1/devices
-GET /v1/ticks/latest
-GET /v1/ticks/latest?device=0
+GET /v1/ticks/latest[?device=0]
 GET /v1/ticks/history?device=0&limit=100
-GET /v1/stream
-GET /v1/stream?device=0
+GET /v1/stream[?device=0]                # Server-Sent Events, event: tick
 ```
 
-`/v1/stream` uses Server-Sent Events. Each event has type `tick` and JSON data:
+Tick JSON (REST/SSE):
 
 ```json
 {
-  "seq": 1,
-  "timestampNs": 123456789,
-  "priceUDollar": 10000000,
-  "price": 10,
-  "volume": 1500,
-  "deviceIndex": 0,
-  "devicePath": "/dev/stock0",
-  "receivedAtUtc": "2026-06-11T12:00:00Z"
+  "seq": 25, "timestampNs": 1781297920237175070,
+  "priceUDollar": 100043141, "price": 100.043141,
+  "volume": 158, "deviceIndex": 0, "symbol": "SBER",
+  "devicePath": "sim://stock0", "receivedAtUtc": "2026-06-12T20:58:40Z"
 }
+```
+
+## Verify the pipeline
+
+```bash
+docker compose -f ../deploy/docker-compose.yml up -d redis clickhouse quotes
+docker exec trading-redis redis-cli SUBSCRIBE quotes:ticks   # live ticks
+docker exec trading-clickhouse clickhouse-client -u trading --password trading \
+  -q 'SELECT count() FROM trading.ticks'                     # growing count
 ```
 
 ## Test

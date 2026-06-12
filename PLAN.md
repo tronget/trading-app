@@ -121,7 +121,7 @@
 Цель — поднять всё окружение одной командой и задать структуру монорепозитория.
 
 **Задачи:**
-- [ ] Структура репозитория:
+- [x] Структура репозитория:
   ```
   Mobile project/
   ├── stock_gen_driver/        # #7 C (готово)
@@ -135,12 +135,12 @@
   ├── docs/                    # Obsidian vault + Markdown
   └── report/                  # исходники отчёта (LaTeX/DOCX) → PDF
   ```
-- [ ] `git init`, `.gitignore` под Kotlin/Go/Android/Node, первый коммит.
-- [ ] `deploy/docker-compose.yml` со службами: `postgres`, `redis` (или `keydb`), `clickhouse`, `otel-collector`, `jaeger`, `gateway`, `data-service`, `quotes`.
-- [ ] `deploy/init/postgres/*.sql` — создание схемы БД (см. §7).
-- [ ] `deploy/init/clickhouse/*.sql` — таблицы тиков/свечей (см. §7).
-- [ ] `deploy/otel-collector-config.yaml` — приём OTLP, экспорт в Jaeger.
-- [ ] `README.md` корневой: как поднять всю систему (`docker compose up`).
+- [x] `git init`, `.gitignore` под Kotlin/Go/Android/Node, первый коммит.
+- [x] `deploy/docker-compose.yml` со службами: `postgres`, `redis` (или `keydb`), `clickhouse`, `otel-collector`, `jaeger`, `gateway`, `data-service`, `quotes`.
+- [x] `deploy/init/postgres/*.sql` — создание схемы БД (см. §7).
+- [x] `deploy/init/clickhouse/*.sql` — таблицы тиков/свечей (см. §7).
+- [x] `deploy/otel-collector-config.yaml` — приём OTLP, экспорт в Jaeger.
+- [x] `README.md` корневой: как поднять всю систему (`docker compose up`).
 
 **Готово, когда:** `docker compose up` поднимает PostgreSQL + Redis + ClickHouse + OTel + Jaeger, healthcheck зелёные.
 
@@ -151,12 +151,12 @@
 Сервис готов как REST/SSE, но для архитектуры на 10k клиентов нужно развязать его с Gateway через Redis и сохранять историю в ClickHouse.
 
 **Задачи:**
-- [ ] Публикация каждого тика в **Redis Pub/Sub** канал `quotes:ticks` (JSON) + запись «последняя цена» в ключ `quote:last:<symbol>`.
-- [ ] Батч-запись тиков в **ClickHouse** (таблица `ticks`), буфер + flush по таймеру/размеру.
-- [ ] Маппинг `dev_idx → тикер` (например 0→`SBER`, 1→`GAZP`, 2→`AAPL`, 3→`BTC`) — конфиг в env/JSON.
-- [ ] Инструментирование OpenTelemetry (трейс на чтение тика и запись).
-- [ ] Метрика «тиков/сек», экспонировать `/metrics` (Prometheus) либо OTLP.
-- [ ] Юнит-тесты на маппинг символов и публикацию (есть `main_test.go` — расширить).
+- [x] Публикация каждого тика в **Redis Pub/Sub** канал `quotes:ticks` (JSON) + запись «последняя цена» в ключ `quote:last:<symbol>`.
+- [x] Батч-запись тиков в **ClickHouse** (таблица `ticks`), буфер + flush по таймеру/размеру.
+- [x] Маппинг `dev_idx → тикер` (например 0→`SBER`, 1→`GAZP`, 2→`AAPL`, 3→`BTC`) — конфиг в env/JSON.
+- [x] Инструментирование OpenTelemetry (трейс на чтение тика и запись).
+- [x] Метрика «тиков/сек», экспонировать `/metrics` (Prometheus) либо OTLP.
+- [x] Юнит-тесты на маппинг символов и публикацию (есть `main_test.go` — расширить).
 
 **Готово, когда:** `redis-cli SUBSCRIBE quotes:ticks` показывает поток котировок; в ClickHouse растёт число строк в `ticks`.
 

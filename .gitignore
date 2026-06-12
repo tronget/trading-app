@@ -6,6 +6,7 @@
 *.out
 /load-simulator/load-simulator
 /quotes-go/quotes
+/quotes-go/quotes-go
 
 # Kotlin / Gradle
 .gradle/
