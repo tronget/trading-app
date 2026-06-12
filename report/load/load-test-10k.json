@@ -1,0 +1,69 @@
+{
+  "actions": [
+    {
+      "action": "history",
+      "count": 24277,
+      "errors": 5,
+      "p50Ms": 30.35,
+      "p95Ms": 126.933,
+      "p99Ms": 209.367,
+      "maxMs": 506.185
+    },
+    {
+      "action": "order",
+      "count": 36987,
+      "errors": 5,
+      "p50Ms": 22.894,
+      "p95Ms": 91.295,
+      "p99Ms": 143.636,
+      "maxMs": 322.908
+    },
+    {
+      "action": "portfolio",
+      "count": 49257,
+      "errors": 0,
+      "p50Ms": 11.885,
+      "p95Ms": 73.943,
+      "p99Ms": 122.926,
+      "maxMs": 317.92
+    },
+    {
+      "action": "quotes",
+      "count": 110119,
+      "errors": 0,
+      "p50Ms": 10.848,
+      "p95Ms": 71.942,
+      "p99Ms": 120.041,
+      "maxMs": 316.574
+    },
+    {
+      "action": "register",
+      "count": 10000,
+      "errors": 0,
+      "p50Ms": 12.607,
+      "p95Ms": 52.228,
+      "p99Ms": 121.859,
+      "maxMs": 402.168
+    },
+    {
+      "action": "trades",
+      "count": 24543,
+      "errors": 0,
+      "p50Ms": 11.083,
+      "p95Ms": 71.542,
+      "p99Ms": 119.567,
+      "maxMs": 264.085
+    }
+  ],
+  "config": {
+    "gateway": "http://localhost:8080",
+    "clients": 10000,
+    "wsClients": 1000,
+    "runId": "run1781299613",
+    "duration": "1m30s",
+    "interval": "5s"
+  },
+  "finishedAt": "2026-06-12T21:29:28Z",
+  "wsConnectFailures": 0,
+  "wsTicksReceived": 6079500
+}

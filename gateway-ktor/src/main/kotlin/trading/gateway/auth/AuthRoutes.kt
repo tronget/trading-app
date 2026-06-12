@@ -22,10 +22,8 @@ import trading.gateway.model.UserWithHash
 import trading.gateway.trading.DataServiceClient
 import trading.gateway.trading.passthrough
 
-private const val BCRYPT_COST = 12
-
 /** Регистрация, логин и обновление токена. Пароли хэшируются bcrypt'ом. */
-fun Route.authRoutes(tokens: TokenService, dataService: DataServiceClient) {
+fun Route.authRoutes(tokens: TokenService, dataService: DataServiceClient, bcryptCost: Int = 10) {
     val json = Json { ignoreUnknownKeys = true }
 
     post("/auth/register") {
@@ -35,7 +33,7 @@ fun Route.authRoutes(tokens: TokenService, dataService: DataServiceClient) {
             return@post
         }
 
-        val hash = BCrypt.withDefaults().hashToString(BCRYPT_COST, credentials.password.toCharArray())
+        val hash = BCrypt.withDefaults().hashToString(bcryptCost, credentials.password.toCharArray())
         val body = buildJsonObject {
             put("login", credentials.login.trim())
             put("passwordHash", hash)

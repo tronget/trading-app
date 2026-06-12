@@ -119,7 +119,7 @@ fun Application.module(
         }
 
         rateLimit(RateLimitName("api")) {
-            authRoutes(tokens, dataService)
+            authRoutes(tokens, dataService, config.bcryptCost)
             quoteRoutes(hub, clickhouse, dataService, tokens)
 
             authenticate("jwt") {

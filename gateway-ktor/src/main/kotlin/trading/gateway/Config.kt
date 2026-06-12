@@ -14,6 +14,7 @@ data class Config(
     val accessTtlMinutes: Long = env("JWT_ACCESS_TTL_MIN", "15").toLong(),
     val refreshTtlDays: Long = env("JWT_REFRESH_TTL_DAYS", "7").toLong(),
     val rateLimitPerSecond: Int = env("RATE_LIMIT_RPS", "30").toInt(),
+    val bcryptCost: Int = env("BCRYPT_COST", "10").toInt(),
 ) {
     companion object {
         private fun env(key: String, fallback: String): String =
