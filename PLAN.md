@@ -190,20 +190,20 @@
 Единая точка входа для клиентов: аутентификация, проксирование, агрегация, стрим котировок.
 
 **Задачи:**
-- [ ] Каркас Ktor, CORS, `ContentNegotiation` (JSON), `StatusPages` (единый формат ошибок).
-- [ ] **Аутентификация JWT**: `POST /auth/register`, `POST /auth/login`, refresh-токен; пароли — bcrypt/argon2.
-- [ ] Защита маршрутов через `authenticate("jwt")`.
-- [ ] **Котировки:**
+- [x] Каркас Ktor, CORS, `ContentNegotiation` (JSON), `StatusPages` (единый формат ошибок).
+- [x] **Аутентификация JWT**: `POST /auth/register`, `POST /auth/login`, refresh-токен; пароли — bcrypt/argon2.
+- [x] Защита маршрутов через `authenticate("jwt")`.
+- [x] **Котировки:**
   - `GET /quotes` — список инструментов + последняя цена (из Redis-кэша);
   - `GET /quotes/{symbol}/history?from&to&interval` — свечи из ClickHouse;
   - `GET /ws` (или `/stream`) — **WebSocket**: Gateway подписан на Redis `quotes:ticks` и пушит клиентам выбранные символы.
-- [ ] **Торговля** (проксирование в Data-сервис #4):
+- [x] **Торговля** (проксирование в Data-сервис #4):
   - `GET /portfolio` — портфель текущего пользователя;
   - `GET /orders`, `POST /orders`, `DELETE /orders/{id}`;
   - `GET /trades` — история сделок.
-- [ ] **Rate limiting** (важно для теста на 10k) — Ktor-плагин или Redis-счётчики.
-- [ ] OpenTelemetry: сквозной trace-id от клиента до Data-сервиса.
-- [ ] Контрактные тесты API.
+- [x] **Rate limiting** (важно для теста на 10k) — Ktor-плагин или Redis-счётчики.
+- [x] OpenTelemetry: сквозной trace-id от клиента до Data-сервиса.
+- [x] Контрактные тесты API.
 
 **Готово, когда:** через Gateway можно зарегистрироваться, получить котировки по WebSocket, разместить ордер и увидеть портфель — всё под JWT.
 
