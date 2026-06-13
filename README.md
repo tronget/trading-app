@@ -14,10 +14,11 @@
 | `data-service-ktor/` | #4 Сервис БД: счета, ордера, сделки, матчинг | Kotlin, Ktor, голый SQL |
 | `gateway-ktor/` | #3 Gateway: JWT-auth, WebSocket-котировки, проксирование | Kotlin, Ktor |
 | `android-app/` | #1 Нативное приложение | Kotlin, Jetpack Compose |
+| `rn-app/` | #2 Кросс-платформенный клиент (опц.) | React Native, Expo |
 | `load-simulator/` | #5 Нагрузочный имитатор 10 000 клиентов | Go |
 | `deploy/` | Инфраструктура: docker-compose, init-SQL, OTel | Docker |
 | `docs/` | Документация (Obsidian vault) | Markdown |
-| `report/` | Отчёт по ГОСТ | LaTeX |
+| `report/` | Отчёт по ГОСТ | Typst |
 
 ## Быстрый старт
 
@@ -59,7 +60,7 @@ TOKEN=$(curl -s -X POST localhost:8080/auth/register \
 # market-ордер на покупку
 curl -s -X POST localhost:8080/orders \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"symbol":"AAPL","side":"BUY","type":"MARKET","qty":10,"clientOrderId":"demo-1"}'
+  -d '{"symbol":"AAPL","side":"BUY","type":"MARKET","qty":"10","clientOrderId":"demo-1"}'
 
 # портфель
 curl -s localhost:8080/portfolio -H "Authorization: Bearer $TOKEN"
@@ -77,6 +78,11 @@ cd stock_gen_driver && make && sudo insmod stock_gen.ko
 ## Нагрузочный тест
 
 ```bash
+ulimit -n 65535
 cd load-simulator
-go run . -clients 10000 -gateway http://localhost:8080 -duration 2m
+go run . -clients 10000 -ws-clients 1000 -ramp-up 60s -duration 90s -interval 5s
 ```
+
+Зафиксированный результат (см. `report/load/load-test-10k.json`): 255 193
+запроса за 90 с, 0.004 % ошибок, p99 ≤ 210 мс, 1000 WebSocket-соединений
+без переподключений.
