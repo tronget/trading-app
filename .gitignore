@@ -49,3 +49,4 @@ report/*.blg
 # Env / secrets
 .env
 *.local
+android-app/local.properties
