@@ -1,5 +1,6 @@
 package com.trading.app.ui.portfolio
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,9 +28,10 @@ import com.trading.app.data.Position
 import com.trading.app.ui.market.ErrorRetry
 import com.trading.app.ui.theme.LossRed
 import com.trading.app.ui.theme.ProfitGreen
+import java.math.BigDecimal
 
 @Composable
-fun PortfolioScreen(viewModel: PortfolioViewModel) {
+fun PortfolioScreen(viewModel: PortfolioViewModel, onOpenInstrument: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val portfolio = state.portfolio
 
@@ -52,6 +54,19 @@ fun PortfolioScreen(viewModel: PortfolioViewModel) {
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                         )
+                        val totalPnl = portfolio.positions
+                            .mapNotNull { it.pnl?.toBigDecimalOrNull() }
+                            .fold(BigDecimal.ZERO) { acc, p -> acc + p }
+                        if (portfolio.positions.any { it.pnl != null }) {
+                            val negative = totalPnl.signum() < 0
+                            val sign = if (negative) "" else "+"
+                            Text(
+                                "Прибыль/убыток: $sign${totalPnl.toPlainString()} ${portfolio.currency}",
+                                color = if (negative) LossRed else ProfitGreen,
+                                fontWeight = FontWeight.Medium,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
                         Text("Свободно: ${portfolio.cash} ${portfolio.currency}")
                     }
@@ -60,15 +75,17 @@ fun PortfolioScreen(viewModel: PortfolioViewModel) {
             if (portfolio.positions.isEmpty()) {
                 item { Text("Позиций пока нет", Modifier.padding(16.dp)) }
             } else {
-                items(portfolio.positions, key = { it.symbol }) { PositionRow(it) }
+                items(portfolio.positions, key = { it.symbol }) { position ->
+                    PositionRow(position) { onOpenInstrument(position.symbol) }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun PositionRow(position: Position) {
-    Card(Modifier.fillMaxWidth()) {
+private fun PositionRow(position: Position, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
