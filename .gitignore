@@ -50,3 +50,5 @@ report/*.blg
 .env
 *.local
 android-app/local.properties
+
+report-requirements/

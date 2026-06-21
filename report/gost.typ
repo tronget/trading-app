@@ -27,6 +27,10 @@
   }
 
   show figure.caption: set text(size: 12pt)
+  // ГОСТ: «Рисунок N — …» под рисунком, «Таблица N — …» над таблицей
+  show figure.where(kind: image): set figure(supplement: [Рисунок])
+  show figure.where(kind: table): set figure.caption(position: top)
+  set figure.caption(separator: [ — ])
   show raw: set text(font: ("DejaVu Sans Mono", "Liberation Mono"), size: 10pt)
   show table: set text(size: 12pt)
 
