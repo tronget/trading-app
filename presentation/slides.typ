@@ -26,10 +26,16 @@
   },
 )
 
-#set text(font: ("Liberation Sans", "DejaVu Sans"), size: 21pt, lang: "ru")
+#set text(font: "Arial", size: 21pt, lang: "ru")
 #set par(justify: false, leading: 0.62em)
 #show strong: set text(fill: accent2)
-#set list(marker: (text(fill: accent)[▪], text(fill: accent)[–]), spacing: 0.9em)
+#set list(
+  marker: (
+    box(width: 0.34em, height: 0.34em, fill: accent),
+    text(fill: accent)[–],
+  ),
+  spacing: 0.9em,
+)
 
 // Обычный контентный слайд: заголовок + линия + тело.
 #let slide(title, body) = {
@@ -50,24 +56,19 @@
     Факультет программной инженерии и компьютерной техники \
     Дисциплина «Разработка мобильных приложений»
   ]
-  #v(1.0em)
+  #v(2em)
   #block(width: 90%)[
     #text(size: 38pt, weight: "bold", fill: accent)[
       Мобильное приложение для трейдинга и инвестиций
     ]
   ]
-  #v(0.3em)
-  #text(size: 20pt, fill: muted)[
-    Полная экосистема биржевого терминала: \
-    от драйвера ядра Linux до Android-клиента на 10 000 клиентов
-  ]
-  #v(1.6em)
+  #v(1em)
   #text(size: 17pt)[
-    Покалюхин И. И. · Нестеров В. А. · Джохадзе А. Б. · \
-    Бондаренко А. А. · Лашкул А. В.
+    Работу выполнили:\
+    Покалюхин И. И. · Нестеров В. А. · Джохадзе А. Б. · Бондаренко А. А. · Лашкул А. В.
   ]
-  #v(0.5em)
-  #text(size: 15pt, fill: muted)[Санкт-Петербург · 2026]
+  #v(2em)
+  #text(size: 15pt, fill: muted)[Санкт-Петербург 2026]
 ]
 
 // ─────────────────────────── Введение ───────────────────────────
@@ -78,8 +79,6 @@
     заменил биржевой терминал.
   - Жёсткие требования: котировки *в реальном времени*, *корректные и
     атомарные* сделки, *тысячи одновременных* клиентов в пик волатильности.
-  - Задача охватывает *весь стек*: от ядра ОС до мобильного клиента и
-    наблюдаемой распределённой серверной части.
 ]
 
 #slide[Цель и задачи][
@@ -157,7 +156,7 @@
 #slide[Архитектура системы][
   #align(center)[
     #block(fill: soft, inset: 12pt, radius: 6pt)[
-      #set text(font: ("DejaVu Sans Mono", "Liberation Mono"), size: 14pt)
+      #set text(font: "DejaVu Sans Mono", size: 14pt)
       #set align(left)
       ```
       Android (#1)            Load Simulator (#5)

@@ -52,3 +52,5 @@ report/*.blg
 android-app/local.properties
 
 report-requirements/
+data-service-ktor/bin/
+docs/knowledge-base/.obsidian/

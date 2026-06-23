@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpSend
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.plugin
 import io.ktor.client.plugins.websocket.WebSockets
@@ -32,6 +33,11 @@ class ApiClient(val baseUrl: String, private val tokens: TokenStore) {
 
     val http = HttpClient(OkHttp) {
         install(ContentNegotiation) { json(this@ApiClient.json) }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 30_000
+        }
         install(WebSockets)
         expectSuccess = false
     }

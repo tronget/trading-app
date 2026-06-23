@@ -5,11 +5,10 @@
   set page(
     paper: "a4",
     margin: (left: 30mm, right: 15mm, top: 20mm, bottom: 20mm),
-    numbering: "1",
     number-align: center + bottom,
   )
   set text(font: ("Times New Roman", "Liberation Serif"), size: 14pt, lang: "ru")
-  set par(leading: 1.0em, first-line-indent: 1.25cm, justify: true)
+  set par(leading: 1.0em, justify: true)
 
   set heading(numbering: "1.1")
   show heading.where(level: 1): it => {
@@ -22,6 +21,7 @@
   show heading.where(level: 2): it => {
     set text(size: 14pt, weight: "bold")
     set par(first-line-indent: 0cm)
+    v(0.5em)
     it
     v(0.3em)
   }
