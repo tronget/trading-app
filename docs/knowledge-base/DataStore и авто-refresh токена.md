@@ -1,65 +1,51 @@
 # DataStore и авто-refresh токена
 
-Android-приложение хранит токены в **DataStore**. Когда access-токен истекает,
-клиент пытается обновить его автоматически.
+В Android-приложении токены нужно хранить между запусками. Для этого выбран
+DataStore: он работает с корутинами и не заставляет UI ждать чтение с диска.
 
-## DataStore: где лежит токен
+## Что здесь важно
 
-Access- и refresh-токены нужно сохранить между запусками приложения. На Android
-для этого используется **Jetpack DataStore**.
+Обычного хранения в памяти здесь недостаточно. Access-токен должен переживать
+перезапуск приложения. Refresh-токен тоже нужен, иначе пользователь будет
+постоянно входить заново.
 
-Чем DataStore лучше `SharedPreferences`:
+DataStore удобен тем, что отдаёт данные как поток. Если токен очистился,
+приложение может само переключиться на экран входа. Не надо вручную
+протаскивать это состояние по всем экранам.
 
-- **асинхронный, на корутинах/Flow** — не блокирует UI-поток при чтении с диска
-  (старый `SharedPreferences.getString` мог дёрнуть диск прямо в главном потоке);
-- отдаёт значения как **`Flow`** — можно реактивно следить за изменениями;
-- безопаснее при конкурентной записи.
+## Как работает обновление токена
+
+Access-токен живёт недолго. Когда сервер отвечает `401`, клиент пробует
+обновить токен через `/auth/refresh`. Если получилось — повторяет исходный
+запрос. Если нет — очищает токены и отправляет пользователя на логин.
+
+Для пользователя это выглядит незаметно: если refresh сработал, он продолжает
+работать с приложением без повторного входа.
+
+Важно не делать бесконечный цикл. Запрос повторяется один раз. Если после
+обновления опять `401`, значит сессия уже невалидна.
+
+## Техническая деталь
+
+Хранилище токенов выглядит примерно так:
 
 ```kotlin
 private val Context.dataStore by preferencesDataStore(name = "auth")
 
 class TokenStore(private val context: Context) {
     private val accessKey = stringPreferencesKey("access_token")
-    private val refreshKey = stringPreferencesKey("refresh_token")
 
-    val accessToken: Flow<String?> = context.dataStore.data.map { it[accessKey] }
-    suspend fun save(access: String, refresh: String? = null) { … }
-    suspend fun clear() { … }
+    val accessToken: Flow<String?> =
+        context.dataStore.data.map { it[accessKey] }
 }
 ```
 
-`accessToken` как `Flow` удобен для навигации: пропал токен (`clear()` после
-неудачного refresh) — приложение реактивно перекидывает на экран логина.
-
-## Авто-refresh: протухший токен чинится сам
-
-Access-токен живёт 15 минут. Чтобы пользователь не входил заново, клиент
-обрабатывает истечение по схеме **«401 → refresh → повтор»**:
-
-1. К каждому запросу подставляется `Authorization: Bearer <access>`.
-2. Сервер ответил `401 Unauthorized` → access протух.
-3. Клиент дёргает `/auth/refresh` с refresh-токеном, получает новый access.
-4. **Повторяет исходный запрос** с новым токеном — пользователь ничего не заметил.
-5. Если и refresh не сработал → чистим токены → на экран логина.
-
-В коде это перехватчик Ktor-клиента (`HttpSend`):
+А повтор запроса делается на уровне HTTP-клиента:
 
 ```kotlin
-http.plugin(HttpSend).intercept { request ->
-    request.header(Authorization, "Bearer ${tokens.current().access}")
-    val call = execute(request)
-    if (call.response.status != Unauthorized) return@intercept call
-
-    val refreshed = tryRefresh() ?: return@intercept call   // обновляем access
-    request.headers.remove(Authorization)
-    request.header(Authorization, "Bearer $refreshed")
-    execute(request)                                         // повтор один раз
+val call = execute(request)
+if (call.response.status == Unauthorized) {
+    val refreshed = tryRefresh()
+    if (refreshed != null) execute(requestWithNewToken)
 }
 ```
-
-Запрос повторяется только один раз. Если после обновления токена сервер снова
-вернул `401`, токены очищаются. Иначе клиент может попасть в бесконечный цикл
-refresh-запросов.
-
-Один экземпляр Ktor `HttpClient` используется и для REST, и для
-[[WebSocket и fan-out котировок|WebSocket]].
