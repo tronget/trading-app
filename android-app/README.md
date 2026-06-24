@@ -41,3 +41,11 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 
 Бэкенд должен быть поднят (`docker compose up` в `deploy/` или вручную:
 PostgreSQL, Redis, ClickHouse, quotes-go, data-service, gateway).
+
+
+
+
+
+cd /Users/moyshavondervals/StudioProjects/trading-app/rn-app                                                                                                         
+npm install                                                                                                                                                          
+npx expo start --android

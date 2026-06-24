@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,7 +33,36 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.trading.app.ui.components.LineChart
 import com.trading.app.ui.theme.LossRed
 import com.trading.app.ui.theme.ProfitGreen
+import java.math.BigDecimal
 import java.util.Locale
+
+// Серверная колонка — NUMERIC(18, 6): значение меньше 1e12, до 6 знаков после точки.
+private val MAX_AMOUNT = BigDecimal("999999999999.999999")
+private val MAX_QTY = BigDecimal("999999999999")
+
+/** Ошибка для поля «Количество»: только целое положительное число акций. */
+private fun qtyError(input: String): String? {
+    if (input.isBlank()) return null // пустое поле — блокируем кнопки, без красного текста
+    val value = input.toBigDecimalOrNull() ?: return "Введите число"
+    return when {
+        value.signum() <= 0 -> "Должно быть больше нуля"
+        value.stripTrailingZeros().scale() > 0 -> "Только целое число акций"
+        value > MAX_QTY -> "Слишком большое количество"
+        else -> null
+    }
+}
+
+/** Ошибка для поля «Цена»: положительное число, до 6 знаков после точки. */
+private fun priceError(input: String): String? {
+    if (input.isBlank()) return null
+    val value = input.toBigDecimalOrNull() ?: return "Введите число"
+    return when {
+        value.signum() <= 0 -> "Должно быть больше нуля"
+        value.scale() > 6 -> "Не более 6 знаков после точки"
+        value > MAX_AMOUNT -> "Слишком большое значение"
+        else -> null
+    }
+}
 
 @Composable
 fun InstrumentScreen(viewModel: InstrumentViewModel) {
@@ -84,24 +114,39 @@ fun InstrumentScreen(viewModel: InstrumentViewModel) {
             FilterChip(
                 selected = orderType == "MARKET",
                 onClick = { orderType = "MARKET" },
-                label = { Text("Market") },
+                label = { Text("Рыночный") },
             )
             FilterChip(
                 selected = orderType == "LIMIT",
                 onClick = { orderType = "LIMIT" },
-                label = { Text("Limit") },
+                label = { Text("Лимитный") },
             )
         }
         Spacer(Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = qty,
-            onValueChange = { qty = it },
-            label = { Text("Количество") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        val qtyErr = qtyError(qty)
+        val qtyValue = qty.toLongOrNull() ?: 0L
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalIconButton(
+                onClick = { qty = (qtyValue - 1).coerceAtLeast(1).toString() },
+                enabled = qtyValue > 1,
+            ) { Text("−", style = MaterialTheme.typography.titleLarge) }
+            OutlinedTextField(
+                value = qty,
+                onValueChange = { new -> qty = new.filter { it.isDigit() } },
+                label = { Text("Количество (шт)") },
+                singleLine = true,
+                isError = qtyErr != null,
+                supportingText = qtyErr?.let { { Text(it, color = LossRed) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+            )
+            FilledTonalIconButton(
+                onClick = { qty = (qtyValue + 1).toString() },
+                enabled = qtyValue < MAX_QTY.toLong(),
+            ) { Text("+", style = MaterialTheme.typography.titleLarge) }
+        }
+        val priceErr = if (orderType == "LIMIT") priceError(limitPrice) else null
         if (orderType == "LIMIT") {
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
@@ -109,14 +154,16 @@ fun InstrumentScreen(viewModel: InstrumentViewModel) {
                 onValueChange = { limitPrice = it },
                 label = { Text("Цена") },
                 singleLine = true,
+                isError = priceErr != null,
+                supportingText = priceErr?.let { { Text(it, color = LossRed) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
 
         Spacer(Modifier.height(12.dp))
-        val qtyValid = qty.toDoubleOrNull()?.let { it > 0 } == true
-        val priceValid = orderType == "MARKET" || limitPrice.toDoubleOrNull()?.let { it > 0 } == true
+        val qtyValid = qtyErr == null && qty.isNotBlank()
+        val priceValid = orderType == "MARKET" || (priceErr == null && limitPrice.isNotBlank())
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = { viewModel.placeOrder("BUY", orderType, qty, limitPrice) },
@@ -134,7 +181,12 @@ fun InstrumentScreen(viewModel: InstrumentViewModel) {
 
         state.orderResult?.let {
             Spacer(Modifier.height(12.dp))
-            Text(it, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                it,
+                color = if (state.orderFailed) LossRed else ProfitGreen,
+                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }

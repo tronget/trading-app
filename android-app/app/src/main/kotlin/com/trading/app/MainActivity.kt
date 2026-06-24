@@ -121,7 +121,7 @@ fun AppRoot(container: AppContainer) {
             }
             composable("portfolio") {
                 val vm: PortfolioViewModel = viewModel(factory = Factory { PortfolioViewModel(container.tradingRepository) })
-                PortfolioScreen(vm)
+                PortfolioScreen(vm) { symbol -> navController.navigate("instrument/$symbol") }
             }
             composable("history") {
                 val vm: HistoryViewModel = viewModel(factory = Factory { HistoryViewModel(container.tradingRepository) })

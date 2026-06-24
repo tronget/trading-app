@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.trading.app.data.Order
 import com.trading.app.data.Trade
+import com.trading.app.ui.orderStatusLabel
+import com.trading.app.ui.orderTypeLabel
+import com.trading.app.ui.sideLabel
 import com.trading.app.ui.theme.LossRed
 import com.trading.app.ui.theme.ProfitGreen
 
@@ -67,12 +70,12 @@ private fun OrderRow(order: Order, onCancel: () -> Unit) {
         ) {
             Column {
                 Text(
-                    "${order.side} ${order.qty} ${order.symbol}",
+                    "${sideLabel(order.side)} ${order.qty} ${order.symbol}",
                     fontWeight = FontWeight.Bold,
                     color = if (order.side == "BUY") ProfitGreen else LossRed,
                 )
                 Text(
-                    "${order.type}${order.price?.let { " @ $it" } ?: ""} · ${order.status}",
+                    "${orderTypeLabel(order.type)}${order.price?.let { " @ $it" } ?: ""} · ${orderStatusLabel(order.status)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -92,7 +95,7 @@ private fun TradeRow(trade: Trade) {
         ) {
             Column {
                 Text(
-                    "${trade.side} ${trade.qty} ${trade.symbol}",
+                    "${sideLabel(trade.side)} ${trade.qty} ${trade.symbol}",
                     fontWeight = FontWeight.Bold,
                     color = if (trade.side == "BUY") ProfitGreen else LossRed,
                 )
